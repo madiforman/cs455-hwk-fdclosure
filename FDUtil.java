@@ -5,8 +5,8 @@ import java.util.HashSet;
  * This utility class is not meant to be instantitated, and just provides some
  * useful methods on FD sets.
  * 
- * @author <<YOUR NAME>>
- * @version <<DATE>>
+ * @author Madison Sanchez-Forman
+ * @version October 28, 2022
  */
 public final class FDUtil {
 
@@ -17,6 +17,7 @@ public final class FDUtil {
    * @return a set of trivial FDs with respect to the given FDSet
    */
   public static FDSet trivial(final FDSet fdset) {
+
     // TODO: Obtain the power set of each FD's left-hand attributes. For each
     // element in the power set, create a new FD and add it to the a new FDSet.
 
