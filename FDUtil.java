@@ -1,6 +1,6 @@
 import java.util.Set;
 import java.util.HashSet;
-
+import java.util.*;
 /**
  * This utility class is not meant to be instantitated, and just provides some
  * useful methods on FD sets.
@@ -17,13 +17,20 @@ public final class FDUtil {
    * @return a set of trivial FDs with respect to the given FDSet
    */
   public static FDSet trivial(final FDSet fdset) {
-
-    // TODO: Obtain the power set of each FD's left-hand attributes. For each
-    // element in the power set, create a new FD and add it to the a new FDSet.
-
-    return null;
+    FDSet copy = new FDSet(fdset);
+    FDSet trivial_set = new FDSet();
+    FD trivials = null;
+    for(FD f : copy.getSet()){
+      Set<Set<String>> power_set = powerSet(f.getLeft());
+      for(Set<String> inner_set : power_set){
+        if(!inner_set.isEmpty()){
+          trivials = new FD(f.getLeft(), inner_set);
+          trivial_set.add(trivials);
+       }
+      }
+    }
+    return trivial_set;
   }
-
   /**
    * Augments every FD in the given set of FDs with the given attributes
    * 
@@ -32,10 +39,12 @@ public final class FDUtil {
    * @return a set of augmented FDs
    */
   public static FDSet augment(final FDSet fdset, final Set<String> attrs) {
-    // TODO: Copy each FD in the given set and then union both sides with the given
-    // set of attributes, and add this augmented FD to a new FDSet.
-
-    return null;
+    FDSet augmented_set = new FDSet(fdset);
+    for(FD F: augmented_set.getSet()){
+      F.addToLeft(attrs);
+      F.addToRight(attrs);
+    }
+    return augmented_set;
   }
 
   /**
@@ -48,6 +57,17 @@ public final class FDUtil {
     // TODO: Examine each pair of FDs in the given set. If the transitive property
     // holds on the pair of FDs, then generate the new FD and add it to a new FDSet.
     // Repeat until no new transitive FDs are found.
+    FDSet copy = new FDSet(fdset);
+    FDSet IDK = new FDSet();
+    for(FD F: copy.getSet()){
+      Set<String> left = F.getLeft();
+      Set<String> right = F.getRight();
+  System.out.println(F.getRight());
+        System.out.println(F.getLeft());
+      
+
+    }
+
 
     return null;
   }
