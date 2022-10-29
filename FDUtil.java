@@ -22,7 +22,7 @@ public final class FDUtil {
     for(FD fd : copy.getSet()){
       Set<Set<String>> power_set = powerSet(fd.getLeft()); 
       for(Set<String> inner_set : power_set){
-        if(inner_set.size() > 0){
+        if(inner_set.size() > 0){ //skip empties
           trivial_set.add(new FD(fd.getLeft(), inner_set));
        }
       }
@@ -37,7 +37,7 @@ public final class FDUtil {
    * @return a set of augmented FDs
    */
   public static FDSet augment(final FDSet fdset, final Set<String> attrs) {
-    FDSet augmented_set = new FDSet(fdset);
+    FDSet augmented_set = new FDSet();
     for(FD f1: fdset){
       FD fd = new FD(f1);
       fd.addToLeft(attrs);
@@ -61,8 +61,18 @@ public static FDSet transitive(final FDSet fdset){
       if(is_transitive(f1, f2)){
         FD new_fd = new FD(f1.getLeft(), f2.getRight());
         copy.add(new_fd);
-
+        FDSet nested = transitive_helper(copy, new_fd);
+        copy.addAll(nested);
       }
+    }
+  }
+  return copy;
+}
+public static FDSet transitive_helper(FDSet fdset, FD t){
+  FDSet copy = new FDSet(fdset);
+  for(FD f: fdset){
+    if(is_transitive(f, t)){
+      copy.add(f);
     }
   }
   return copy;
@@ -113,13 +123,11 @@ public static Set<Set<String>> get_attributes(FDSet fdset){
       for(Set<String> inner_set : all_attributes){
         if(inner_set.size()!= 0){ //skip empty
           augment_set = augment(copy, inner_set); //augment fdset with each attribute in the power set (besides empty ones)
+          copy.addAll(augment_set);
         }
       }
       if(!copy.getSet().containsAll(trivial_set.getSet())){ //if copy doesnt contain the trivial set
         copy.addAll(trivial_set);
-      } 
-      else if(!copy.getSet().containsAll(augment_set.getSet())){ //or the augmented set
-        copy.addAll(augment_set);
       }
      else if(!copy.getSet().containsAll(transitive_set.getSet())){ //or the transitive set
         copy.addAll(transitive_set);
