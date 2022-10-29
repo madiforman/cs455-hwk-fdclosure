@@ -17,15 +17,13 @@ public final class FDUtil {
    * @return a set of trivial FDs with respect to the given FDSet
    */
   public static FDSet trivial(final FDSet fdset) {
-    FDSet copy = new FDSet(fdset);
-    FDSet trivial_set = new FDSet();
-    FD trivials = null;
-    for(FD f : copy.getSet()){
-      Set<Set<String>> power_set = powerSet(f.getLeft());
+    FDSet copy = new FDSet(fdset); //copy for iterating
+    FDSet trivial_set = new FDSet(); // where the final set will be returned
+    for(FD fd : copy.getSet()){
+      Set<Set<String>> power_set = powerSet(fd.getLeft());
       for(Set<String> inner_set : power_set){
-        if(!inner_set.isEmpty()){
-          trivials = new FD(f.getLeft(), inner_set);
-          trivial_set.add(trivials);
+        if(inner_set.size() > 0){
+          trivial_set.add(new FD(fd.getLeft(), inner_set));
        }
       }
     }
@@ -40,38 +38,62 @@ public final class FDUtil {
    */
   public static FDSet augment(final FDSet fdset, final Set<String> attrs) {
     FDSet augmented_set = new FDSet(fdset);
-    for(FD F: augmented_set.getSet()){
-      F.addToLeft(attrs);
-      F.addToRight(attrs);
+    for(FD f1: fdset){
+      FD fd = new FD(f1);
+      fd.addToLeft(attrs);
+      fd.addToRight(attrs);
+      augmented_set.add(fd);
     }
     return augmented_set;
   }
 
-  /**
-   * Exhaustively resolves transitive FDs with respect to the given set of FDs
-   * 
-   * @param fdset (Immutable) FD Set
-   * @return all transitive FDs with respect to the input FD set
-   */
-  public static FDSet transitive(final FDSet fdset) {
-    // TODO: Examine each pair of FDs in the given set. If the transitive property
-    // holds on the pair of FDs, then generate the new FD and add it to a new FDSet.
-    // Repeat until no new transitive FDs are found.
-    FDSet copy = new FDSet(fdset);
-    FDSet IDK = new FDSet();
-    for(FD F: copy.getSet()){
-      Set<String> left = F.getLeft();
-      Set<String> right = F.getRight();
-  System.out.println(F.getRight());
-        System.out.println(F.getLeft());
-      
-
+/**
+  * Exhaustively resolves transitive FDs with respect to the given set of FDs
+  * 
+  * @param fdset (Immutable) FD Set
+  * @return all transitive FDs with respect to the input FD set
+  */
+public static FDSet transitive(final FDSet fdset){
+  FDSet copy = new FDSet(fdset);
+  FDSet other_copy = new FDSet(fdset);
+  for(FD f1: fdset){
+    for(FD f2: fdset){
+      if(is_transitive(f1, f2)){
+        FD new_fd = new FD(f1.getLeft(), f2.getRight());
+        copy.add(new_fd);
+      }
     }
-
-
-    return null;
   }
-
+  return copy;
+}
+/**
+  * Checks if two fds have a transitive relationship
+  * 
+  * @param FD f1
+  * @param FD f2
+  * @return true if transitive relationship holds false otherwise
+  */
+public static boolean is_transitive(FD f1, FD f2){
+  if(f2.leftContains(f1.getRight())){
+    return true;
+  }
+  else return false;
+}
+/**
+  * gets all attributes from a given FDSet
+  * 
+  * @param FDSet fdset
+  * @return Set<Set<String>> power set of all attributes within fdset
+  */
+public static Set<Set<String>> get_attributes(FDSet fdset){
+  Set<String> attributes = new HashSet<>();
+  for(FD fd : fdset){
+    attributes.addAll(fd.getLeft());
+    attributes.addAll(fd.getRight());
+  }
+  Set<Set<String>> all_attributes = powerSet(attributes);
+  return all_attributes;
+}
   /**
    * Generates the closure of the given FD Set
    * 
@@ -79,13 +101,31 @@ public final class FDUtil {
    * @return the closure of the input FD Set
    */
   public static FDSet fdSetClosure(final FDSet fdset) {
-    // TODO: Use the FDSet copy constructor to deep copy the given FDSet
-
-    // TODO: Generate new FDs by applying Trivial and Augmentation Rules, followed
-    // by Transitivity Rule, and add new FDs to the result.
-    // Repeat until no further changes are detected.
-
-    return null;
+    FDSet copy = new FDSet(fdset); //copy input set
+    boolean flag = true; //flag used to stop iterating when needed
+    do {
+      FDSet trivial_set = trivial(copy); //i store the trivial set, augmented set, and transitive set in temporary variables to not lose/change information in copy
+      FDSet augment_set = new FDSet(copy);
+      Set<Set<String>> all_attributes = get_attributes(copy);
+      for(Set<String> inner_set : all_attributes){
+        if(inner_set.size()!= 0){ //skip empty
+          augment_set = augment(fdset, inner_set); //augment fdset with each attribute in the power set (besides empty ones)
+        }
+      }
+      FDSet transitive_set = transitive(copy);
+      if(!copy.getSet().containsAll(trivial_set.getSet())){ //if copy doesnt contain the trivial set
+        copy.addAll(trivial_set);
+      } 
+      else if(!copy.getSet().containsAll(augment_set.getSet())){ //or the augmented set
+        copy.addAll(augment_set);
+      }
+     else if(!copy.getSet().containsAll(transitive_set.getSet())){ //or the transitive set
+        copy.addAll(transitive_set);
+      } else {
+        flag = false; //if it did contain those, we have finished changing copy and have found the set closure of fdset
+      }
+    } while(flag);
+    return copy; 
   }
 
   /**
